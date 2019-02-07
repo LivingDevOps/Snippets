@@ -1,0 +1,51 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "LivingDevOps/lidop.online"
+  config.vm.network "forwarded_port", guest: 443, host: 443
+  config.vm.network "forwarded_port", guest: 943, host: 943
+  config.vm.network "forwarded_port", guest: 1194, host: 1194
+  config.vm.network "private_network", ip: "10.20.30.40"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false  
+    vb.memory = "2048"
+  end
+  
+
+  config.vm.provision "shell", inline: <<-SHELL
+  echo "########################################################"
+  echo "### Install Software ###################################"
+  echo "########################################################"
+  apt-get update -y
+  
+  sudo apt-get install -y \
+    ntp \
+    wget \
+    curl 
+    
+  wget http://swupdate.openvpn.org/as/openvpn-as-2.6.1-Ubuntu16.amd_64.deb
+  dpkg -i openvpn-as-2.6.1-Ubuntu16.amd_64.deb
+
+  echo "########################################################"
+  echo "### Configure Software #################################"
+  echo "########################################################"
+  sudo service openvpnas stop
+  cd /usr/local/openvpn_as/
+  rm ./etc/db/config.db
+  rm ./etc/db/certs.db
+  rm ./etc/db/userprop.db
+  rm ./etc/db/log.db
+  rm ./etc/as.conf
+  ./bin/sqlite3 < /vagrant/config/config.db.bak ./etc/db/config.db
+  ./bin/sqlite3 </vagrant/config/certs.db.bak ./etc/db/certs.db
+  ./bin/sqlite3 </vagrant/config/userprop.db.bak ./etc/db/userprop.db
+  ./bin/sqlite3 </vagrant/config/log.db.bak ./etc/db/log.db
+  cp /vagrant/config/as.conf.bak ./etc/as.conf
+  service openvpnas start
+
+  echo "done"
+SHELL
+
+end

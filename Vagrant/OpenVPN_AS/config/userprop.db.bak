@@ -1,0 +1,27 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE profile (
+	id INTEGER NOT NULL, 
+	name VARCHAR(128) NOT NULL, 
+	type VARCHAR(128), 
+	PRIMARY KEY (id)
+);
+INSERT INTO "profile" VALUES(1,'__DEFAULT__','user_default');
+INSERT INTO "profile" VALUES(2,'openvpn','user_compile');
+CREATE TABLE config (
+	profile_id INTEGER NOT NULL, 
+	name VARCHAR(128) NOT NULL, 
+	value TEXT, 
+	PRIMARY KEY (profile_id, name), 
+	FOREIGN KEY(profile_id) REFERENCES profile (id)
+);
+INSERT INTO "config" VALUES(1,'type','user_default');
+INSERT INTO "config" VALUES(1,'prop_autogenerate','true');
+INSERT INTO "config" VALUES(2,'prop_superuser','true');
+INSERT INTO "config" VALUES(2,'type','user_compile');
+CREATE UNIQUE INDEX ix_profile_name ON profile (name);
+CREATE INDEX ix_profile_id ON profile (id);
+CREATE INDEX ix_profile_type ON profile (type);
+CREATE INDEX ix_config_profile_id ON config (profile_id);
+CREATE INDEX ix_config_name ON config (name);
+COMMIT;
